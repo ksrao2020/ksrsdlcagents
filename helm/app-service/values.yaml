@@ -1,0 +1,14 @@
+replicaCount: 2
+image:
+  repository: registry.example.com/app-service
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+service:
+  port: 80
+resources:
+  requests: { cpu: 250m, memory: 512Mi }
+  limits:   { cpu: "1",  memory: 1Gi }
+oauth2:
+  issuerUri: https://idp.example.com/realms/app
+# Name of an existing Secret with DB_URL, DB_USERNAME, DB_PASSWORD (never put credentials in values).
+dbSecretName: app-service-db

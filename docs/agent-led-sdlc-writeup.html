@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent-led SDLC: from Jira story to reviewed PR</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff; --text: #1f1f1d; --quiet: #5f5e5a; --line: #b4b2a9; --rule: #e3e1da;
+    --accent: #185fa5; --accent-fill: #e6f1fb; --code-bg: #f1efe8; --link: #185fa5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1f1f1d; --text: #f1efe8; --quiet: #b4b2a9; --line: #888780; --rule: #444441;
+      --accent: #85b7eb; --accent-fill: #0c447c; --code-bg: #2c2c2a; --link: #85b7eb;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 48px 16px 64px; background: var(--bg); color: var(--text);
+    font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  main { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 30px; line-height: 1.25; font-weight: 600; margin: 0 0 8px; }
+  h2 { font-size: 21px; line-height: 1.3; font-weight: 600; margin: 40px 0 10px; }
+  p { margin: 0 0 14px; }
+  ul { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  a { color: var(--link); }
+  code { font: 0.9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--code-bg); padding: 2px 5px; border-radius: 4px; }
+  .date { color: var(--quiet); font-size: 15px; margin-bottom: 28px; }
+  figure { margin: 20px 0; }
+  figure svg { display: block; width: 100%; height: auto; }
+  figcaption { color: var(--quiet); font-size: 14px; margin-top: 8px; }
+  svg text { font-family: inherit; fill: var(--text); }
+  svg .sub { fill: var(--quiet); font-size: 11.5px; }
+  svg .name { font-size: 13px; font-weight: 600; }
+  svg .box { fill: none; stroke: var(--line); stroke-width: 1.25; }
+  svg .gate { fill: var(--accent-fill); stroke: var(--accent); stroke-width: 2; }
+  svg .gate-sub { font-size: 11.5px; }
+  svg .wire { fill: none; stroke: var(--line); stroke-width: 1.25; }
+  svg .head { fill: var(--line); }
+  .table-wrap { overflow-x: auto; margin: 0 0 14px; }
+  table { width: 100%; border-collapse: collapse; font-size: 16px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--rule); }
+  th { font-weight: 600; }
+  @media (max-width: 560px) {
+    body { padding-top: 28px; font-size: 16px; }
+    h1 { font-size: 25px; }
+    table { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Agent-led SDLC: from Jira story to reviewed PR</h1>
+  <p class="date"><time datetime="2026-11-04">4 November 2026</time></p>
+
+  <h2>The idea</h2>
+  <p>Give the agent a Jira ID, and it takes a business analyst's user story to a reviewed pull request, using our engineering standards at every step.</p>
+  <p>An AI coding agent on its own is fast but unpredictable. It can skip tests, ignore the architecture, or solve the same problem differently each time. So this setup does two things: it splits the work among specialist agents, and it enforces our standards automatically rather than trusting the agent to remember them.</p>
+  <p>It's built on Claude Code, for a Java, Spring Boot and Oracle backend that runs on Kubernetes and is secured with OAuth 2.0.</p>
+
+  <h2>How it works</h2>
+  <p>One command, <code>/story PROJ-123</code>, runs the whole sequence, and each agent has a single job.</p>
+  <figure>
+    <svg viewBox="0 0 760 372" role="img" aria-label="Six agents do the work and people approve at two points. BDD analyst, people approve the scenarios, solution architect, people approve the design, test writer, implementer, quality gates, two reviewer agents, pull request. Review findings go back to the implementer.">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="head" d="M0 0L10 5L0 10z"/></marker>
+      </defs>
+      <text x="24" y="30" font-size="15" font-weight="600">Six agents do the work; people approve at two points</text>
+
+      <g>
+        <path class="wire" d="M232 88H276" marker-end="url(#arrow)"/>
+        <path class="wire" d="M484 88H528" marker-end="url(#arrow)"/>
+        <path class="wire" d="M632 120V140H128V160" marker-end="url(#arrow)"/>
+        <path class="wire" d="M232 192H276" marker-end="url(#arrow)"/>
+        <path class="wire" d="M484 192H528" marker-end="url(#arrow)"/>
+        <path class="wire" d="M632 224V244H128V264" marker-end="url(#arrow)"/>
+        <path class="wire" d="M232 296H276" marker-end="url(#arrow)"/>
+        <path class="wire" d="M484 296H528" marker-end="url(#arrow)"/>
+      </g>
+
+      <rect class="box" x="24" y="56" width="208" height="64" rx="8"/>
+      <text class="name" x="128" y="84" text-anchor="middle">BDD analyst</text>
+      <text class="sub" x="128" y="102" text-anchor="middle">Story to Gherkin scenarios</text>
+
+      <rect class="gate" x="276" y="56" width="208" height="64" rx="8"/>
+      <text class="name" x="380" y="84" text-anchor="middle">People approve</text>
+      <text class="gate-sub" x="380" y="102" text-anchor="middle">The scenarios</text>
+
+      <rect class="box" x="528" y="56" width="208" height="64" rx="8"/>
+      <text class="name" x="632" y="84" text-anchor="middle">Solution architect</text>
+      <text class="sub" x="632" y="102" text-anchor="middle">Design and API contract</text>
+
+      <rect class="gate" x="24" y="160" width="208" height="64" rx="8"/>
+      <text class="name" x="128" y="188" text-anchor="middle">People approve</text>
+      <text class="gate-sub" x="128" y="206" text-anchor="middle">The design</text>
+
+      <rect class="box" x="276" y="160" width="208" height="64" rx="8"/>
+      <text class="name" x="380" y="188" text-anchor="middle">Test writer</text>
+      <text class="sub" x="380" y="206" text-anchor="middle">Failing tests first</text>
+
+      <rect class="box" x="528" y="160" width="208" height="64" rx="8"/>
+      <text class="name" x="632" y="188" text-anchor="middle">Implementer</text>
+      <text class="sub" x="632" y="206" text-anchor="middle">Code until tests pass</text>
+
+      <rect class="box" x="24" y="264" width="208" height="64" rx="8"/>
+      <text class="name" x="128" y="292" text-anchor="middle">Quality gates</text>
+      <text class="sub" x="128" y="310" text-anchor="middle">Coverage, Sonar, OWASP</text>
+
+      <rect class="box" x="276" y="264" width="208" height="64" rx="8"/>
+      <text class="name" x="380" y="292" text-anchor="middle">Two reviewer agents</text>
+      <text class="sub" x="380" y="310" text-anchor="middle">Architecture and security</text>
+
+      <rect class="box" x="528" y="264" width="208" height="64" rx="8"/>
+      <text class="name" x="632" y="292" text-anchor="middle">Pull request</text>
+      <text class="sub" x="632" y="310" text-anchor="middle">Jira updated; people merge</text>
+
+      <text class="sub" x="380" y="352" text-anchor="middle">Review findings go back to the implementer</text>
+    </svg>
+    <figcaption>The /story workflow: six agents, two approvals</figcaption>
+  </figure>
+  <p>It follows BDD from the outside and TDD on the inside: scenarios define the behaviour, then failing tests come before any code. If the story is unclear, the analyst posts its questions on the Jira ticket and stops rather than guessing.</p>
+
+  <h2>One template for every story</h2>
+  <p>Every story is built the same way, because the agents copy a working reference feature instead of inventing a structure.</p>
+  <ul>
+    <li><strong>Hexagonal architecture with DDD:</strong> business logic stays free of frameworks, and dependencies point inward.</li>
+    <li><strong>OpenAPI first:</strong> the API contract changes before the code does.</li>
+    <li><strong>MapStruct mapping:</strong> data moves from request to DTO to domain model to JPA entity, one mapper per step.</li>
+    <li><strong>Lombok builders:</strong> used for domain models, entities and commands.</li>
+    <li><strong>Separate read and write transactions:</strong> queries run read-only, and commands run in a single write transaction.</li>
+    <li><strong>One global exception handler:</strong> every error has the same format and a stable error code.</li>
+    <li><strong>Jakarta validation:</strong> checks run at the API boundary and on commands, while business rules live in the domain.</li>
+  </ul>
+  <p>The benefit is that a story written next year should look like one written today, whichever agent or developer works on it.</p>
+
+  <h2>Why we can trust the output</h2>
+  <p>The rules that matter most stop the agent or fail the build, so it can't quietly skip them.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Standard</th><th>What enforces it</th></tr></thead>
+      <tbody>
+        <tr><td>Test first</td><td>A hook blocks production code edits until a test has changed</td></tr>
+        <tr><td>Architecture</td><td>14 automated ArchUnit rules fail the build, and a second hook blocks common violations as they're written</td></tr>
+        <tr><td>80% test coverage</td><td>JaCoCo fails the build below 80% line or branch coverage</td></tr>
+        <tr><td>Zero Sonar vulnerabilities</td><td>The Sonar quality gate, which must also run in CI</td></tr>
+        <tr><td>Finishing the work</td><td>A hook won't let the agent stop while the build is failing</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>People stay in control too. Agents can't force-push, push directly to main, or apply changes to Kubernetes, and they never merge their own pull requests.</p>
+
+  <h2>Where it stands and what's next</h2>
+  <p>The reference project works, but the full workflow hasn't yet been run on a real Jira story.</p>
+  <ul>
+    <li><strong>Proven:</strong> the reference feature passes 53 tests with 93% line and 95.8% branch coverage, and I tested the architecture and test-first hooks on sample edits.</li>
+    <li><strong>Not yet run:</strong> the Oracle integration tests, the Cucumber scenarios, the Sonar scan, the Jira connection and a complete <code>/story</code> run.</li>
+  </ul>
+  <p>The next step is a pilot: pick one small, real story, run it end to end, and review the pull request as we would any other. That will show us how well it works, and it's the decision I'm asking for today.</p>
+  <p>The code is at <a href="https://github.com/ksrao2020/ksrsdlcagents">github.com/ksrao2020/ksrsdlcagents</a>.</p>
+</main>
+</body>
+</html>

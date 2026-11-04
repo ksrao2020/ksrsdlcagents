@@ -25,7 +25,9 @@
   h1 { font-size: 30px; line-height: 1.25; font-weight: 600; margin: 0 0 8px; }
   h2 { font-size: 21px; line-height: 1.3; font-weight: 600; margin: 40px 0 10px; }
   p { margin: 0 0 14px; }
-  ul { margin: 0 0 14px; padding-left: 22px; }
+  h3 { font-size: 17px; line-height: 1.35; font-weight: 600; margin: 24px 0 8px; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  td code { overflow-wrap: anywhere; }
   li { margin-bottom: 6px; }
   a { color: var(--link); }
   code { font: 0.9em ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--code-bg); padding: 2px 5px; border-radius: 4px; }
@@ -161,6 +163,54 @@
   </ul>
   <p>The next step is a pilot: pick one small, real story, run it end to end, and review the pull request as we would any other. That will show us how well it works, and it's the decision I'm asking for today.</p>
   <p>The code is at <a href="https://github.com/ksrao2020/ksrsdlcagents">github.com/ksrao2020/ksrsdlcagents</a>.</p>
+
+  <h2>Token usage telemetry</h2>
+  <p>We can measure tokens and estimated cost per story and per agent, but the first story-level numbers will come from the pilot.</p>
+  <p><strong>Usage so far:</strong> the kit and reference project were built in one Claude Code session, about $17 at API list prices as of 5 November 2026. That session also covered this write-up, debugging and setup. The six agents didn't take part, because they haven't run yet.</p>
+  <p>The session processed about 38 million tokens, but 98% were cached context re-read on each request. It generated about 181,000 output tokens, which is the fairer measure of work produced.</p>
+
+  <h3>Where the numbers come from</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Source</th><th>What it gives</th><th>What it needs</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Local report (<code>scripts/story-usage.py</code>)</td><td>Tokens and estimated cost by agent and story</td><td>Nothing extra, but only sees the machine that ran the story</td><td>Tested on a real session with subagents; totals matched a separate recount</td></tr>
+        <tr><td>OpenTelemetry</td><td>Team-wide metrics and dashboards</td><td>A collector, and Claude Code 2.1.273 or newer for agent names</td><td>Jira ID tag confirmed; not yet tested with a collector</td></tr>
+        <tr><td>Anthropic billing data</td><td>Actual spend</td><td>Billing access</td><td>Use it to check the estimates above</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>How we extract the metrics</h3>
+  <ol>
+    <li><strong>Tag each run:</strong> <code>scripts/story-run.sh</code> records the session against its Jira ID and adds <code>jira.id</code> to all telemetry.</li>
+    <li><strong>Report by agent:</strong> <code>scripts/story-usage.py</code> reads the session and subagent transcripts, counts each request once, skips error placeholders and groups usage by agent.</li>
+    <li><strong>Estimate cost:</strong> the script applies published prices per model, keeping cache reads and writes separate because they're priced differently.</li>
+    <li><strong>Report across the team:</strong> telemetry sends the metrics below to a collector, and dashboards group them by Jira ID, agent and model.</li>
+    <li><strong>Add delivery data:</strong> combine these with Jira and CI data to get cost per merged story, first-time gate pass rate, review rounds and time to merge. This step isn't built yet.</li>
+    <li><strong>Check against billing:</strong> compare the estimates with actual spend each month.</li>
+  </ol>
+
+  <h3>What we can report</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Question</th><th>Metric</th></tr></thead>
+      <tbody>
+        <tr><td>What does a story cost?</td><td><code>claude_code.cost.usage</code> and <code>claude_code.token.usage</code>, by <code>jira.id</code></td></tr>
+        <tr><td>Which agent costs the most?</td><td>The same metrics, by <code>agent.name</code> and <code>model</code></td></tr>
+        <tr><td>How much was produced?</td><td><code>claude_code.lines_of_code.count</code>, <code>commit.count</code>, <code>pull_request.count</code></td></tr>
+        <tr><td>How much human and machine time?</td><td><code>claude_code.active_time.total</code></td></tr>
+        <tr><td>Do developers accept its edits?</td><td><code>claude_code.code_edit_tool.decision</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Limits</h3>
+  <ul>
+    <li><strong>Estimates only:</strong> script and telemetry costs aren't billing data.</li>
+    <li><strong>No baseline yet:</strong> we can't claim productivity gains until we compare against manual delivery.</li>
+    <li><strong>Privacy:</strong> showing agent names needs <code>OTEL_LOG_TOOL_DETAILS=1</code>, which can add tool detail to events, so check it against our data policy.</li>
+  </ul>
 </main>
 </body>
 </html>

@@ -58,6 +58,20 @@
 
     <build>
         <plugins>
+            <!-- Repackages the jar so it can run with java -jar (also what the Dockerfile runs) -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+
             <!-- OpenAPI contract-first: generates API interfaces + request/response models -->
             <plugin>
                 <groupId>org.openapitools</groupId>

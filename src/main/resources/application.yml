@@ -5,6 +5,8 @@ spring:
     url: ${DB_URL:}
     username: ${DB_USERNAME:}
     password: ${DB_PASSWORD:}
+    # A missing DB_URL must fail clearly, not fall back to the H2 driver used by the local profile.
+    embedded-database-connection: none
   jpa:
     open-in-view: false
     hibernate:

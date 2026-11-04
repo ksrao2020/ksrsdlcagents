@@ -29,6 +29,27 @@ claude "/story PROJ-123"
 - `src/main/java/com/acme/app/customer`: the reference slice every story copies
 - `src/main/java/com/acme/app/shared`: base exceptions, global handler, security, MapStruct config
 
+## Running the app
+
+The app needs Java 21 or newer.
+
+- **On a laptop, without Oracle:** set `SPRING_PROFILES_ACTIVE=local` and run `com.acme.app.Application` from your IDE. It uses in-memory H2. Health is at `http://localhost:8080/actuator/health` and Swagger UI is at `http://localhost:8080/swagger-ui.html`. API calls, including those made from Swagger, return 401 because no token can validate.
+- **Against real services:** set `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` and `OAUTH2_ISSUER_URI`, and leave the profile unset. Startup fails if any of them is missing.
+
+## Tracking token usage
+
+Start stories with the runner instead of `/story`, so each session is recorded against its Jira ID:
+
+```bash
+scripts/story-run.sh PROJ-123
+scripts/story-usage.py PROJ-123         # table by agent; add --json for a dashboard or CI
+```
+
+- **Local report:** needs no setup. It reads Claude Code's transcripts on the machine that ran the story, and prints estimated cost at API list prices. Update `PRICES` in the script when prices change. Copy the `--json` output somewhere durable if you need it long term, because transcripts can be cleaned up.
+- **Team telemetry:** copy `telemetry.env.example` to `.env.telemetry` and set your OpenTelemetry collector. The runner tags every metric and event with `jira.id`. Use Claude Code 2.1.273 or newer, or custom agents appear as `custom` in token and cost metrics.
+
+Both report estimates. Use your Anthropic billing data for actual spend.
+
 ## Commands
 
 ```bash

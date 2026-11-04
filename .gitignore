@@ -4,3 +4,5 @@ target/
 .DS_Store
 .env
 .claude/settings.local.json
+.env.telemetry
+.story-runs/

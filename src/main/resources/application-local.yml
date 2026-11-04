@@ -1,0 +1,17 @@
+# Run on a laptop with no Oracle or identity provider: activate with SPRING_PROFILES_ACTIVE=local.
+# Never use in a deployed environment. The H2 driver is not in the packaged jar.
+spring:
+  datasource:
+    url: jdbc:h2:mem:appdb;MODE=Oracle;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      # H2 reports NUMBER(19) differently from Oracle, so validate would fail here only.
+      ddl-auto: none
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Placeholder so the app starts. It is not contacted until a token arrives, and no token will validate.
+          issuer-uri: http://localhost:9000/local-placeholder

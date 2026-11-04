@@ -38,7 +38,7 @@ every new user story copies its structure and conventions. Read both before writ
 ## Testing
 - Unit: JUnit 5 + Mockito + AssertJ. Web slices: `@WebMvcTest` with `jwt()` post-processors.
 - Mappers: a unit test for every mapper (`Mappers.getMapper(...)`).
-- Persistence: `*IT` tests with `@DataJpaTest` + Testcontainers (`gvenzl/oracle-free`). No H2.
+- Persistence: `*IT` tests with `@DataJpaTest` + Testcontainers (`gvenzl/oracle-free`). No H2 in tests; it exists only for the `local` run profile.
 - Acceptance: Cucumber-JVM (`*.feature` + steps), run in the `it` profile.
 - Coverage: JaCoCo line AND branch ≥ 80% (enforced by `mvn verify`). No assertion-free tests.
   Only generated code and the application main class are excluded, in pom.xml.
